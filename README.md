@@ -44,7 +44,7 @@ resource "aws_db_subnet_group" "ourDBSubGroup" {
 }
 ```
 
-A security groups must also be provisioned:
+A security group must also be provisioned:
 
 ```terraform
 #main.tf
@@ -68,9 +68,9 @@ resource "aws_security_group" "ourDBSecG" {
 }
 ```
 
-### 4. Create the database instance and parameter group
+### 3. Create the database instance and parameter group
 
-To create the parameter group, a specific resource must be used:
+To configure the RDS instance on a database-level, a parameter group is required. To create the parameter group, a specific resource must be used:
 
 ```terraform
 #main.tf
@@ -100,10 +100,14 @@ resource "aws_db_instance" "ourDBInst" {
   db_subnet_group_name   = aws_db_subnet_group.ourDBSubGroup.name
   vpc_security_group_ids = [aws_security_group.ourDBSecG.id]
   parameter_group_name   = aws_db_parameter_group.ourDBParamGroup.name
-  publicly_accessible    = true
+  publicly_accessible    = false
   skip_final_snapshot    = true
 }
 ```
+
+The root user password for the database instance relies on an input variable - therefore, on the `variables.tf` file, a `sensitive` meta-argument is added so that the password is hidden from the output during Terraform operations.
+
+Even so, Terraform stores the password on the `.tfstate` file. He
 
 
 https://learn.hashicorp.com/tutorials/terraform/aws-rds?in=terraform/modules&utm_source=WEBSITE&utm_medium=WEB_IO&utm_offer=ARTICLE_PAGE&utm_content=DOCS

@@ -76,4 +76,5 @@ variable "ourDBInstUsername" {
 variable "ourDBInstPassword" {
   type = string
   description = "Password credential for the database instance"
+  sensitive = true
 }
