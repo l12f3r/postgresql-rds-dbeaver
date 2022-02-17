@@ -3,10 +3,10 @@ module "vpc" {
   version = "2.77.0"
 
   name                 = "ourDBvpc"
-  cidr                 = "10.10.0.0/16"
+  cidr                 = var.vpcCIDRBlock
   azs                  = data.aws_availability_zones.available.names
-  private_subnets       = ["10.0.4.0/24", "10.0.5.0/24", "10.0.6.0/24"]
-  public_subnets       = ["10.0.4.0/24", "10.0.5.0/24", "10.0.6.0/24"]
+  private_subnets      = [var.pubSubCIDRBlock]
+  public_subnets       = [var.privSubCIDRBlock]
   enable_dns_hostnames = true
   enable_dns_support   = true
 }
