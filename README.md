@@ -105,9 +105,48 @@ resource "aws_db_instance" "ourDBInst" {
 }
 ```
 
-The root user password for the database instance relies on an input variable - therefore, on the `variables.tf` file, a `sensitive` meta-argument is added so that the password is hidden from the output during Terraform operations.
+### 4. Configure input and output variables
 
-Even so, Terraform stores the password on the `.tfstate` file. He
+The root user password for the database instance must be configured as an input variable - therefore, on the `variables.tf` file, a `sensitive` meta-argument is added so that the password is hidden from the output during Terraform operations.
 
+Even so, Terraform stores the password on the `.tfstate` file. Hence why is important to add it to `.gitignore` upon versioning, so such data will not be persisted, and an additional layer of security is added (thanks [@pdoerning](https://github.com/pdoerning) for the heads-up!).
+
+```terraform
+#variables.tf
+variable "ourDBInstPassword" {
+  type = string
+  description = "Password credential for the database instance"
+  sensitive = true
+}
+```
+
+```terraform
+#.gitignore
+*.terraform
+*.tfstate
+.terraform.lock.hcl
+*.git
+.DS_Store
+```
+
+Outputs work similarly to return values - it returns information about the infrastructure on the standard output. An `outputs.tf` file must be created and, in our scenario, we need to have three outputs after running `terraform apply`: the hostname, port and username of the database instance.
+
+```terraform
+#outputs.tf
+output "outHostname" {
+  value = aws_db_instance.ourDBInst.address
+  sensitive = true
+}
+
+output "outPort" {
+  value = aws_db_instance.ourDBInst.port
+  sensitive = true
+}
+
+output "outUsername" {
+  value = aws_db_instance.ourDBInst.username
+  sensitive = true
+}
+```
 
 https://learn.hashicorp.com/tutorials/terraform/aws-rds?in=terraform/modules&utm_source=WEBSITE&utm_medium=WEB_IO&utm_offer=ARTICLE_PAGE&utm_content=DOCS
