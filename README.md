@@ -109,8 +109,6 @@ resource "aws_db_instance" "ourDBInst" {
 
 The root user password for the database instance must be configured as an input variable - therefore, on the `variables.tf` file, a `sensitive` meta-argument is added so that the password is hidden from the output during Terraform operations.
 
-Even so, Terraform stores the password on the `.tfstate` file. Hence why is important to add it to `.gitignore` upon versioning, so such data will not be persisted, and an additional layer of security is added (thanks [@pdoerning](https://github.com/pdoerning) for the heads-up!).
-
 ```terraform
 #variables.tf
 variable "ourDBInstPassword" {
@@ -119,6 +117,8 @@ variable "ourDBInstPassword" {
   sensitive = true
 }
 ```
+
+Even so, Terraform stores the password on the `.tfstate` file. Hence why is important to add it to `.gitignore` upon versioning, so such data will not be persisted, and an additional layer of security is added (thanks [@pdoerning](https://github.com/pdoerning) for the heads-up!).
 
 ```terraform
 #.gitignore
@@ -129,7 +129,7 @@ variable "ourDBInstPassword" {
 .DS_Store
 ```
 
-Outputs work similarly to return values - it returns information about the infrastructure on the standard output. An `outputs.tf` file must be created and, in our scenario, we need to have three outputs after running `terraform apply`: the hostname, port and username of the database instance.
+Outputs work similarly to return values - it returns information about the infrastructure on the standard output. An `outputs.tf` file must be created and, in our scenario, we need to have three outputs available to construct the database connection string, later: the hostname, port and username of the database instance.
 
 ```terraform
 #outputs.tf
