@@ -13,13 +13,13 @@ variable "vpcCIDRBlock" {
   description = "CIDR Block for the VPC"
 }
 
-variable "pubSubCIDRBlock" {
-  type = string
+variable "pubSubCIDRBlocks" {
+  type = list(string)
   description = "CIDR Block for the public subnet"
 }
 
-variable "privSubCIDRBlock" {
-  type = string
+variable "privSubCIDRBlocks" {
+  type = list(string)
   description = "CIDR Block for the private subnet"
 }
 

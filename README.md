@@ -10,23 +10,34 @@ RDS setup using Terraform.
 
 As usual, `providers.tf` contains data on the cloud services provider and region, `variables.tf` has all variables from `main.tf` code declared, and `parameters.auto.tfvars` has all data to avoid hardcoding. Apart from those, an `outputs.tf` file will be necessary for credentials.
 
-Instead of provisioning several resources depending on another top VPC resource, I decided to use a module for the VPC. Thankfully, provisioning subnets is already done in this block of code.
+Instead of provisioning several resources depending on another top VPC resource, I decided to use a [module](https://registry.terraform.io/modules/terraform-aws-modules/vpc/aws/latest) for the VPC. Thankfully, provisioning subnets is already done in this block of code.
 
-The database must be configured on a private subnet, for security reasons.
+I also set up a `data` source to pick the list of availability zones related to the region defined on the `providers.tf` file.
+
+The database must be configured on a private subnet, for security reasons. Upon configuring the meta-arguments for private and public subnets, make sure to set the variable as list type.
 
 ```terraform
 #main.tf
+data "aws_availability_zones" "azs" {
+  all_availability_zones = true
+
+  filter {
+    name   = "opt-in-status"
+    values = ["opt-in-not-required"]
+  }
+}
+
 module "vpc" {
-  source  = "terraform-aws-modules/vpc/aws"
+  source = "terraform-aws-modules/vpc/aws"
   version = "2.77.0"
 
-  name                 = "ourDBvpc"
-  cidr                 = var.vpcCIDRBlock
-  azs                  = data.aws_availability_zones.available.names
-  private_subnets      = [var.pubSubCIDRBlock]
-  public_subnets       = [var.privSubCIDRBlock]
+  name = var.vpcName
+  cidr = var.vpcCIDRBlock
+  azs = data.aws_availability_zones.azs.names
+  private_subnets = var.privSubCIDRBlocks
+  public_subnets = var.pubSubCIDRBlocks
   enable_dns_hostnames = true
-  enable_dns_support   = true
+  enable_dns_support = true
 }
 ```
 
@@ -156,6 +167,14 @@ output "outUsername" {
 }
 ```
 
+### 5. Running the database
 
+In order to run it properly, recognizing the `.tfvars` files, the following command must be executed:
 
-https://learn.hashicorp.com/tutorials/terraform/aws-rds?in=terraform/modules&utm_source=WEBSITE&utm_medium=WEB_IO&utm_offer=ARTICLE_PAGE&utm_content=DOCS
+`terraform apply -var-file="secret.tfvars"`
+
+That way, Terraform will provision the database instances and networking.
+
+Based on our configuration, there will be a subnet in each availability zone, which will be replicated synchronously as per AWS standards.
+
+To use DBeaver for connection,
