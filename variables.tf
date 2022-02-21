@@ -63,14 +63,10 @@ variable "ourDBInstEngineV" {
   description = "Engine version for the database instance"
 }
 
-variable "ourDBInstEngineV" {
-  type = string
-  description = "Engine version for the database instance"
-}
-
 variable "ourDBInstUsername" {
   type = string
   description = "Username credential for the database instance"
+  sensitive = true
 }
 
 variable "ourDBInstPassword" {

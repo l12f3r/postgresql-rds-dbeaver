@@ -105,12 +105,18 @@ resource "aws_db_instance" "ourDBInst" {
 }
 ```
 
-### 4. Configure input and output variables
+### 4. Authentication and output variables
 
-The root user password for the database instance must be configured as an input variable - therefore, on the `variables.tf` file, a `sensitive` meta-argument is added so that the password is hidden from the output during Terraform operations.
+The database username and password must be configured - therefore, on the `variables.tf` file, a `sensitive` meta-argument is added so that the password is hidden from the output during Terraform operations. Also, for our scenario, it's better to create an additional `secret.tfvars` file, where the database username and password will be stored:
 
 ```terraform
 #variables.tf
+variable "ourDBInstUsername" {
+  type = string
+  description = "Username credential for the database instance"
+  sensitive = true
+}
+
 variable "ourDBInstPassword" {
   type = string
   description = "Password credential for the database instance"
@@ -118,12 +124,13 @@ variable "ourDBInstPassword" {
 }
 ```
 
-Even so, Terraform stores the password on the `.tfstate` file. Hence why is important to add it to `.gitignore` upon versioning, so such data will not be persisted, and an additional layer of security is added (thanks [@pdoerning](https://github.com/pdoerning) for the heads-up!).
+Even so, Terraform stores the password on the `.tfstate` file. Hence why is important to add this file and `secret.tfvars` to `.gitignore` upon versioning, so such data will not be persisted, and an additional layer of security is added (thanks [@pdoerning](https://github.com/pdoerning) for the heads-up and [@tigpt](https://github.com/tigpt) for the `secret.tfvars` suggestion!).
 
 ```terraform
 #.gitignore
 *.terraform
 *.tfstate
+*.tfvars
 .terraform.lock.hcl
 *.git
 .DS_Store
@@ -148,5 +155,7 @@ output "outUsername" {
   sensitive = true
 }
 ```
+
+
 
 https://learn.hashicorp.com/tutorials/terraform/aws-rds?in=terraform/modules&utm_source=WEBSITE&utm_medium=WEB_IO&utm_offer=ARTICLE_PAGE&utm_content=DOCS
