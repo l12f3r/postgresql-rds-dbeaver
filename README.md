@@ -173,7 +173,7 @@ output "outUsername" {
 }
 ```
 
-### 6. Creating the read-replica
+### 5. Creating the read-replica
 
 In order to create the read-replica, one additional database instance resource must be provisioned, using the `replicate_source_db` meta-argument pointing to the primary database (in this scenario, the read-replica uses the ARN instead of the regular primary database identifier as value for the meta-argument, considering that this database can replicate cross-region). There is no need to provision username and password.
 
@@ -182,30 +182,23 @@ In order to create the read-replica, one additional database instance resource m
 resource "aws_db_instance" "ourDBInstRR" {
   replicate_source_db = aws_db_instance.ourDBInst.arn
   identifier = var.ourDBInstRRIdentifier
-  instance_class = var.ourDBInstRRClass
-  allocated_storage = 5
-  engine = var.ourDBInstRREngine
-  engine_version = var.ourDBInstRREngineV
-  username = ""
+  instance_class = var.ourDBInstClass
   password = ""
   db_subnet_group_name = aws_db_subnet_group.ourDBSubGroup.name
   vpc_security_group_ids = [aws_security_group.ourDBSecG.id]
   parameter_group_name = aws_db_parameter_group.ourDBParamGroup.name
   publicly_accessible = true
   skip_final_snapshot = true
-  multi_az = true
-  backup_retention_period = 0
+  multi_az = false
 }
 ```
 
-### 7. Running the database
+### 6. Running the database
 
 In order to run it properly, recognizing the `.tfvars` files, the following command must be executed:
 
 `terraform apply -var-file="secret.tfvars"`
 
-That way, Terraform will provision the database instances and networking.
+That way, Terraform will provision the database instance and networking, with multi-AZ and read-replica set.
 
-Based on our configuration, there will be a subnet in each availability zone, which will be replicated synchronously as per AWS standards.
-
-To use DBeaver for connection,
+To use [DBeaver](https://dbeaver.io/) for connection,
