@@ -98,21 +98,27 @@ resource "aws_db_parameter_group" "ourDBParamGroup" {
 
 The database instance uses the `aws_db_instance` resource. Since that I will use PostgreSQL as engine, this value is stored on the `ourDBInstEngine` variable.
 
+To create the read-replica on the next stages, the `maintenance_window`, `backup_window` and `backup_retention_period` meta-arguments must be set and the timespan declared must not overlap; to ensure multi-AZ, the `multi_az` meta-argument should be set to `true`.
+
 ```terraform
 #main.tf
 resource "aws_db_instance" "ourDBInst" {
-  identifier             = var.ourDBInstIdentifier
-  instance_class         = var.ourDBInstClass
-  allocated_storage      = 5
-  engine                 = var.ourDBInstEngine
-  engine_version         = var.ourDBInstEngineV
-  username               = var.ourDBInstUsername
-  password               = var.ourDBInstPassword
-  db_subnet_group_name   = aws_db_subnet_group.ourDBSubGroup.name
+  identifier = var.ourDBInstIdentifier
+  instance_class = var.ourDBInstClass
+  allocated_storage = 5
+  engine = var.ourDBInstEngine
+  engine_version = var.ourDBInstEngineV
+  username = var.ourDBInstUsername
+  password = var.ourDBInstPassword
+  db_subnet_group_name = aws_db_subnet_group.ourDBSubGroup.name
   vpc_security_group_ids = [aws_security_group.ourDBSecG.id]
-  parameter_group_name   = aws_db_parameter_group.ourDBParamGroup.name
-  publicly_accessible    = false
-  skip_final_snapshot    = true
+  parameter_group_name = aws_db_parameter_group.ourDBParamGroup.name
+  publicly_accessible = true
+  skip_final_snapshot = true
+  multi_az = true
+  backup_retention_period = 3
+  backup_window = "03:31-05:00"
+  maintenance_window = "Mon:01:00-Mon:03:30"
 }
 ```
 
@@ -167,7 +173,32 @@ output "outUsername" {
 }
 ```
 
-### 5. Running the database
+### 6. Creating the read-replica
+
+In order to create the read-replica, one additional database instance resource must be provisioned, using the `replicate_source_db` meta-argument pointing to the primary database (in this scenario, the read-replica uses the ARN instead of the regular primary database identifier as value for the meta-argument, considering that this database can replicate cross-region). There is no need to provision username and password.
+
+```terraform
+#main.tf
+resource "aws_db_instance" "ourDBInstRR" {
+  replicate_source_db = aws_db_instance.ourDBInst.arn
+  identifier = var.ourDBInstRRIdentifier
+  instance_class = var.ourDBInstRRClass
+  allocated_storage = 5
+  engine = var.ourDBInstRREngine
+  engine_version = var.ourDBInstRREngineV
+  username = ""
+  password = ""
+  db_subnet_group_name = aws_db_subnet_group.ourDBSubGroup.name
+  vpc_security_group_ids = [aws_security_group.ourDBSecG.id]
+  parameter_group_name = aws_db_parameter_group.ourDBParamGroup.name
+  publicly_accessible = true
+  skip_final_snapshot = true
+  multi_az = true
+  backup_retention_period = 0
+}
+```
+
+### 7. Running the database
 
 In order to run it properly, recognizing the `.tfvars` files, the following command must be executed:
 

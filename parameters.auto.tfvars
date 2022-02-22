@@ -1,4 +1,4 @@
-region = "us-west-1"
+region = "us-west-2"
 vpcName = "ourDBVPC"
 vpcCIDRBlock = "10.10.0.0/16"
 pubSubCIDRBlocks = ["10.10.0.0/18", "10.10.64.0/18"]
@@ -12,3 +12,4 @@ ourDBInstClass = "db.t3.micro"
 ourDBInstEngine = "postgres"
 ourDBInstEngineV = "13.1"
 ourDBInstUsername = "ouruser"
+ourDBInstRRIdentifier = "our-db-instance-rr"
