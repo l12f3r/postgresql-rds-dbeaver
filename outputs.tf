@@ -8,4 +8,5 @@ output "outPort" {
 
 output "outUsername" {
   value = aws_db_instance.ourDBInst.username
+  sensitve = true
 }
