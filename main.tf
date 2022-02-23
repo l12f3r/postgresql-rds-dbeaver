@@ -22,7 +22,7 @@ module "vpc" {
 
 resource "aws_db_subnet_group" "ourDBSubGroup" {
   name = var.ourDBSubGroupName
-  subnet_ids = module.vpc.private_subnets
+  subnet_ids = module.vpc.public_subnets
 }
 
 resource "aws_security_group" "ourDBSecG" {

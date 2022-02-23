@@ -45,13 +45,15 @@ module "vpc" {
 
 To create the subnet group (that is, a collection of subnets) for the database, the `aws_db_subnet_group` is the proper resource to be used. This subnet group uses subnets created by the `ourDBVPC` module.
 
+In our scenario, the `subnet_ids` must point to the public subnets, so we could test it using DBeaver. However, that's not good practice and it should point to private in production environments.
+
 This resource will be used to avoid Terraform creating RDS instances on the default VPC.
 
 ```terraform
 #main.tf
 resource "aws_db_subnet_group" "ourDBSubGroup" {
-  name       = var.ourDBSubGroupName
-  subnet_ids = module.vpc.private_subnets
+  name = var.ourDBSubGroupName
+  subnet_ids = module.vpc.public_subnets
 }
 ```
 
@@ -201,4 +203,6 @@ In order to run it properly, recognizing the `.tfvars` files, the following comm
 
 That way, Terraform will provision the database instance and networking, with multi-AZ and read-replica set.
 
-To use [DBeaver](https://dbeaver.io/) for connection,
+To use DBeaver for connection, [download it on your environment](https://dbeaver.io/download/) and, upon starting, configure it properly: select PostgreSQL and enter your environment's endpoint and port, username and password on the "Connect to a database" menu:
+
+![Screenshot 2022-02-23 at 09 57 46](https://user-images.githubusercontent.com/22382891/155297102-c7a6b596-600f-4979-a734-50a211ef642c.png)
