@@ -39,7 +39,7 @@ module "vpc" {
 
 To create the subnet group (that is, a collection of subnets) for the database, the `aws_db_subnet_group` is the proper resource to be used. This subnet group uses subnets created by the `ourDBVPC` module.
 
-In our scenario, the `subnet_ids` must point to the public subnets of the module, so we could test it using DBeaver. However, that's not good practice and it should point to private in production environments.
+In our scenario, the `subnet_ids` must point to the public subnets of the module, so we could test it using DBeaver. However, **_that's not good practice and it should point to private in production environments_**.
 
 This resource will be used to avoid Terraform creating RDS instances on the default VPC.
 
