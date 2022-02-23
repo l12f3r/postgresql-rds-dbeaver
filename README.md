@@ -1,10 +1,6 @@
 # postgresql-rds-dbeaver
 
-RDS setup using Terraform.
-- Engine: PostgreSQL
-- Connection using DBeaver
-- Create a Multi-AZ setup
-- Create a read-replica
+Another Terraform challenge! This time, I'm sharing how to provision a PostgreSQL RDS setup on AWS, with Multi-AZ and a read-replica. Once completed, you will be able to access this database using DBeaver.
 
 ### 1. Preparing the environment and VPC
 
@@ -12,9 +8,7 @@ As usual, `providers.tf` contains data on the cloud services provider and region
 
 Instead of provisioning several resources depending on another top VPC resource, I decided to use a [module](https://registry.terraform.io/modules/terraform-aws-modules/vpc/aws/latest) for the VPC. Thankfully, provisioning subnets is already done in this block of code.
 
-I also set up a `data` source to pick the list of availability zones related to the region defined on the `providers.tf` file.
-
-The database must be configured on a private subnet, for security reasons. Upon configuring the meta-arguments for private and public subnets, make sure to set the variable as list type.
+I also set up a `data` source to fetch the list of availability zones related to the region defined on the `providers.tf` file.
 
 ```terraform
 #main.tf
@@ -34,8 +28,8 @@ module "vpc" {
   name = var.vpcName
   cidr = var.vpcCIDRBlock
   azs = data.aws_availability_zones.azs.names
-  private_subnets = var.privSubCIDRBlocks
-  public_subnets = var.pubSubCIDRBlocks
+  private_subnets = var.privSubCIDRBlocks #must be set as list(string) type on variables.tf
+  public_subnets = var.pubSubCIDRBlocks #must be set as list(string) type on variables.tf
   enable_dns_hostnames = true
   enable_dns_support = true
 }
@@ -45,7 +39,7 @@ module "vpc" {
 
 To create the subnet group (that is, a collection of subnets) for the database, the `aws_db_subnet_group` is the proper resource to be used. This subnet group uses subnets created by the `ourDBVPC` module.
 
-In our scenario, the `subnet_ids` must point to the public subnets, so we could test it using DBeaver. However, that's not good practice and it should point to private in production environments.
+In our scenario, the `subnet_ids` must point to the public subnets of the module, so we could test it using DBeaver. However, that's not good practice and it should point to private in production environments.
 
 This resource will be used to avoid Terraform creating RDS instances on the default VPC.
 
@@ -83,7 +77,7 @@ resource "aws_security_group" "ourDBSecG" {
 
 ### 3. Create the database instance and parameter group
 
-To configure the RDS instance on a database-level, a parameter group is required. To create the parameter group, a specific resource must be used:
+To configure the RDS instance on a database-level, a parameter group is required. To create it, a specific `aws_db_parameter_group` resource must be used:
 
 ```terraform
 #main.tf
@@ -143,7 +137,7 @@ variable "ourDBInstPassword" {
 }
 ```
 
-Even so, Terraform stores the password on the `.tfstate` file. Hence why is important to add this file and `secret.tfvars` to `.gitignore` upon versioning, so such data will not be persisted, and an additional layer of security is added (thanks [@pdoerning](https://github.com/pdoerning) for the heads-up and [@tigpt](https://github.com/tigpt) for the `secret.tfvars` suggestion!).
+Even so, Terraform stores the password on the `.tfstate` file. Hence why is important to add this file and `secret.tfvars` to `.gitignore` upon versioning, so such data will not be persisted, and an additional layer of security is added.
 
 ```terraform
 #.gitignore
@@ -161,12 +155,10 @@ Outputs work similarly to return values - it returns information about the infra
 #outputs.tf
 output "outHostname" {
   value = aws_db_instance.ourDBInst.address
-  sensitive = true
 }
 
 output "outPort" {
   value = aws_db_instance.ourDBInst.port
-  sensitive = true
 }
 
 output "outUsername" {
@@ -201,8 +193,33 @@ In order to run it properly, recognizing the `.tfvars` files, the following comm
 
 `terraform apply -var-file="secret.tfvars"`
 
-That way, Terraform will provision the database instance and networking, with multi-AZ and read-replica set.
+After some minutes, the whole infrastructure will be provisioned, with multi-AZ and read-replica set. Also, it will output some information that will be necessary for connecting with DBeaver:
 
-To use DBeaver for connection, [download it on your environment](https://dbeaver.io/download/) and, upon starting, configure it properly: select PostgreSQL and enter your environment's endpoint and port, username and password on the "Connect to a database" menu:
+```
+Apply complete! Resources: 19 added, 0 changed, 0 destroyed.
 
-![Screenshot 2022-02-23 at 09 57 46](https://user-images.githubusercontent.com/22382891/155297102-c7a6b596-600f-4979-a734-50a211ef642c.png)
+Outputs:
+
+outHostname = "our-db-instance.cd2oo0fn30wh.us-west-2.rds.amazonaws.com"
+outPort = 5432
+outUsername = <sensitive>
+```
+
+To use DBeaver for connection, [download it on your environment](https://dbeaver.io/download/) and, upon starting, configure it properly: select PostgreSQL and enter your environment's endpoint and port (both outputs after `terraform apply`), username and password on the "Connect to a database" menu:
+
+![image](https://user-images.githubusercontent.com/22382891/155332398-53e871d9-c781-4400-b3ff-425d1ae3af31.png)
+
+Once everything is done, you will be able to visualise the database content and manipulate it using the tool.
+
+![image](https://user-images.githubusercontent.com/22382891/155333378-1d9568cd-c0ca-45cd-8b7f-a48f838fa4ed.png)
+
+
+### 7. Completion
+
+This was one of the hardest challenges for me - if it wasn't for Terraform, I would probably take much more time to complete it. Fortunately, provisioning everything using infrastructure-as-code helped me learning more on databases, network and security. There was some times when I almost gave up on completing this, but I guess it worth insisting.
+
+![image](https://user-images.githubusercontent.com/22382891/155335051-ae57dadf-1213-452e-9982-c608a7396e10.png)
+
+Vielen danke, [@MauriceBrg](https://github.com/MauriceBrg). Apart from being a great mentor and teacher, you helped a lot with great documentation and tips.
+
+A big shout out to [@pdoerning](https://github.com/pdoerning) for the tips with .gitignore and to [@tigpt](https://github.com/tigpt) for the `secret.tfvars` suggestion. Teamwork makes dreamwork!
